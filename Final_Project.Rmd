@@ -17,7 +17,7 @@ GITHUB: \url{https://github.com/igomez39/BIOS625}.
 
 Everyone: Report writing, Project planning \newline
 Isabel: \newline
-Dhajanae:  \newline
+Dhajanae:  ggplot visuals \newline
 Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
 Ritoban: 
 
