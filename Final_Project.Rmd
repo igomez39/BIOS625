@@ -19,7 +19,7 @@ Everyone: Report writing, Project planning \newline
 Isabel: \newline
 Dhajanae:  ggplot visuals \newline
 Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
-Ritoban: 
+Ritoban: Multiple Imputation of the Data, Longitudinal Data Analysis
 
 \section{Introduction}
 
@@ -218,7 +218,7 @@ To study the relationships between social factors and math performance over time
  &+\beta_{12} I(\textrm{Locale}_i=\textrm{Town}) \times \textrm{Time}_{ij} + \beta_{13} I(\textrm{Locale}_i=\textrm{Suburban}) \times \textrm{Time}_{ij}.
  \end{align*}
 
-Given that a nontrivial amount of data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
+Given that a nontrivial amount of data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from predictive mean matching, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
 
 ```{r, echo=FALSE, fig.height=5, fig.width=10}
 #Run on local computer to make plot
