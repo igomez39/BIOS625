@@ -3,27 +3,100 @@ title: "Math Performance in Relation to School and Social Factors"
 author: "Isabel Gomez, Dhajanae Sylvertooth, Nicholas Hartman, Ritoban Kundu"
 date: ""
 bibliography: bib.bib
-output: pdf_document
+biblio-style: unsrt
+output:
+  pdf_document:
+    pandoc_args: ["--natbib"]
 ---
+
+\section{Github Repository}
+
+The Github repository used in this project can be accessed at \url{https://github.com/igomez39/BIOS625}.
+
+\section{Work Contributions}
+
+Everyone: Report writing, Project planning \newline
+Isabel: \newline
+Dhajanae:  \newline
+Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
+Ritoban: 
 
 \section{Introduction}
 
-Academic proficiency during the formative years of schooling has widespread implications on future development [@first]. It has been shown that education outcomes are linked to a complex set of biological, social, and policy factors. In this report, we focus on math performance in elementary school students over time, and study the relationships between math proficiency and several social and school characteristics. Using the Gini Index, nonparametric estimation, and longitudinal modeling techniques, we explore several different aspects of math proficiency, such as inequality and progress over time. 
+Academic proficiency during the formative years of schooling has widespread implications on future development [@first]. In this report, we focus on math performance in elementary school students over time, and study the relationships between math proficiency and several social and school characteristics. Using the Gini Index, nonparametric estimation, and longitudinal modeling techniques, we explore several different aspects of math proficiency, such as inequality and progress over time. 
 
-The data for this analysis comes from the Early Childhood Longitudinal Study (ECLS), which was a prospective cohort study of elementary school students from 2011-2016. Students were followed from kindergarten to fifth grade, and math performance was assessed each year. In addition, detailed surveys were conducted over time to collect data on a wide range of social factors. The public-use dataset contains information from 970 schools and 18,174 individual students. The dataset contains over 26,000 variables and is 1.67 GB in size, which introduced substantial computational challenges in our analyses.  
+The data for this analysis come from the Early Childhood Longitudinal Study (ECLS), which was a prospective cohort study of elementary school students from 2011-2016 [@ECLS]. Students were followed from kindergarten to fifth grade, and math performance was assessed each year. In addition, detailed surveys were conducted over time to collect data on a wide range of social factors. The public-use dataset contains information on over 26,000 variables for 970 schools and 18,174 individual students.
 
 \section{Descriptive Plots}
 
-```{r, echo=FALSE,warnings=F,message=F}
+We first made descriptive plots to visualize the demographics of the study sample and basic trends in the data. The figures below show frequencies by different categories of interest. Most students in the cohort attended a public school, and both the teachers and parents in this sample tended to be highly educated. However, there was still enough diversity in these variables to study the differences across groups. The cohort included a well-balanced mix of students from urban, suburban, and rural areas, which is a strength of the study design. 
+
+```{r, echo=FALSE,warning=F,message=F}
+setwd("//Users//nicholashartman//Downloads//Education Data")
+
+library(tidyverse)
+library(data.table)
+library(gridExtra)
+#Read Data
+dat=as.data.frame(fread("Imputed_Data.csv",sep=","))
+#####Visuals######
 library(ggplot2)
+library(treemapify)
+attach(dat)
+#par(mar = c(5.1,4.5,4.1,2.5))
+#####School Type frequency table
+g1=(ggplot(dat, aes(x = as.factor(Pub_Pri), fill = factor(Pub_Pri))) + geom_bar(width = 0.5) +
+coord_flip() +
+labs(
+x = "School Type",
+y = "Frequency",
+fill = "School Type") +
+scale_x_discrete(labels = c("Public", "Private")) +
+theme(legend.position = "none") +
+scale_fill_discrete(labels = c("Public", "Private")))
+#####Teacher Education frequency table
+g2=(ggplot(dat, aes(x = as.factor(Teacher_Education), fill = factor(Teacher_Education))) + geom_bar(width = 0.5) +
+coord_flip() +
+labs(
+x = "Teacher Education (yrs)",
+y = "Frequency",
+fill = "Teacher Education") +
+theme(legend.position = "none") +
+scale_fill_discrete(labels = c("5 yrs", "6 yrs", "7 yrs")))
+#####Parent1 & Parent2 Education frequency table
+g3=(ggplot(dat, aes(x = factor(Parent1_Education), fill = factor(Parent1_Education))) + geom_bar(width = 0.5) +
+coord_flip() +
+labs(
+x = "Parent Level of Education",
+y = "Frequency",
+fill = "Level of Education") +
+scale_x_discrete(labels = c("8th grade or less", "9th-12th grade", "High School", "Voc/Tech Program", "Some College", "Bachelor's Degree", "Grad/ Professional", "Master's Degree")) +
+theme(legend.position = "none",
+plot.margin = margin(r = 20, l = 20, t = 5, b = 5),
+legend.spacing = unit(1.0, 'cm'),
+legend.key.size = unit(1, 'cm')) +
+scale_fill_discrete(labels = c("8th grade \n or less", "9th-12th grade", "High School", "Voc/Tech Program", "Some College", "Bachelor's Degree", "Grad/ Professional", "Master's Degree")))
+#####Region Frequency Table
+dat$Locale=factor(dat$Locale)
+g4=(ggplot(dat, aes(x = factor(Locale), fill = factor(Locale))) +
+geom_bar(width = 0.5) +
+coord_flip() +
+labs(
+x = "Locale",
+y = "Frequency",
+fill = "Locale") +
+theme(legend.position = "none") +
+scale_x_discrete(labels = c("City", "Suburb", "Town", "Rural")) +
+scale_fill_discrete(labels = c("City", "Suburb", "Town", "Rural")))
+grid.arrange(g1,g2,g3,g4)
 ```
 
 \section{Math Score Inequality}
 
-\noindent We studied the amount of inequality in math performance and how this changes over time within public and private elementary schools. To accomplish this, we used the Gini Index, which is a well-known measure of inequality and is commonly used to describe wealth inequality. The formula for the Gini Index is
+\noindent We studied the amount of inequality in math performance and how this changes over time within public and private elementary schools. To accomplish this, we used the Gini Index, which is a well-known measure of inequality and is commonly used to describe wealth inequality. The formula for the Gini Index is [@Inequality]:
 
 $$\textrm{Gini}=\frac{\sum_{i=1}^n \sum_{j=1}^n |x_i-x_j|}{2n^2\bar{x}},$$
-\noindent where $x$ represents the math score. Higher Gini Index values correspond to more inequality in the math scores. For this analysis, we used a re-scaled version of the math scores since $x$ must be positive in the Gini index formula. There are two main computational challenges that arise in Gini index estimation:
+\noindent where $x$ represents the math score. Higher Gini Index values correspond to more inequality in the math scores. For this analysis, we used a re-scaled version of the math scores since $x$ must be positive in the Gini Index formula. There are two main computational challenges that arise in Gini Index estimation [@Inequality]:
 
 \begin{enumerate}
 \item Due to a lack of theoretical formulas for the Gini Index standard error, nonparametric bootstrapping is needed to estimate the uncertainty in the Gini Index. 
@@ -51,18 +124,18 @@ g=g+theme(text=element_text(size=15))+labs(color="School Type")
 g
 ```
 
-\noindent We find that the Gini Index decreases over time within both public and private schools. One interpretation of this result is that the kindergarten students with lower scores were able to catch up to the high performers by fifth grade. We also observed that there is more inequality in math scores within public schools compared to within private schools. The magnitude of this difference remained fairly constant over time, and since the 95\% confidence intervals do not overlap, we can conclude that these differences are statistically significant. 
+\noindent We find that the Gini Index decreases over time within both public and private schools. One interpretation of this result is that the kindergarten students with lower scores were able to catch up to the high-performers by fifth grade. We also observed that there is more inequality in math scores within public schools compared to within private schools. The magnitude of this difference remained fairly constant over time, and since the 95\% confidence intervals do not overlap, we can conclude that these differences are statistically significant. 
 
 \section{Longitudinal Models}
 
-To study the relationships between social factors and math performance over time, we used a Generalized Least Squares (GLS) approach. We chose to use GLS over mixed models because we are mainly interested in the marginal associations. No structure was assumed for the covariance matrix of scores over time because it resulted in a substantially better model fit compared to other covariance structures (such as AR1). We specified the marginal model as:
+To study the relationships between social factors and math performance over time, we used a Generalized Least Squares (GLS) approach. We chose to use GLS over mixed models because we are mainly interested in the marginal associations. No structure was assumed for the covariance matrix of scores over time because it resulted in a substantially better model fit (and AIC) compared to other covariance structures (such as AR1). We specified the marginal model as:
 
 \begin{align*}E[\textrm{Score}_{ij}]&=\beta_0+\beta_1\textrm{Time}_{ij}+\beta_2 I(\textrm{School}_i=\textrm{Private})+\beta_3 \textrm{Teacher\_Education}_i+\beta_4 \textrm{Parent\_Education}_i\\
  &+\beta_5 \textrm{Locale} + \beta_6 I(\textrm{School}_i=\textrm{Private}) \times \textrm{Time}_{ij}+\beta_7 \textrm{Teacher\_Education}_i \times \textrm{Time}_{ij} \\
- &+\beta_8 \textrm{Parent\_Education}_i \times \textrm{Time}_{ij}+\beta_9 \textrm{Locale}_i \times \textrm{Time}_{ij}
+ &+\beta_8 \textrm{Parent\_Education}_i \times \textrm{Time}_{ij}+\beta_9 \textrm{Locale}_i \times \textrm{Time}_{ij}.
  \end{align*}
 
-Given that the data contained a substantial amount of missing data, we performed multiple imputation using chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputated datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
+Given that a nontrivial amount of the data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
 
 ```{r, echo=FALSE}
 #Run on local computer to make plot
@@ -86,25 +159,12 @@ g=g+ylab("Estimate")+xlab("")
 g
 ```
 
-Based on the forest plot above, we see a strong positive time trend in the cohort's math scores, as expected. Children who have parents with a higher education perform significantly better in kindergarten but have significantly less improvement in their scores over time. Schools that are located in rural areas, towns, or suburban areas all have significantly higher math scores at baseline compared to urban schools, but we see no significant differences in math score improvement over time. 
+Based on the forest plot above, we see a strong positive time trend in the cohort's math scores, as expected. Children who have parents with a higher education perform significantly better in kindergarten, but have significantly less improvement in their scores over time. Schools that are located in rural areas, towns, or suburban areas all have significantly higher math scores at baseline compared to urban schools, but we see no significant differences in math score improvement over time. 
 
 \section{Discussion}
 
+The results of this analysis have important policy implications. For example, future work is needed to uncover why public schools have more inequality in math scores, and what interventions can be used to reduce these education gaps. In our longitudinal modeling, we observed that having a highly-educated parent is significantly associated with higher scores in kindergarten. Schools and policymakers may attempt to identify the specific factors that are driving this association and provide all students with the same resources. 
 
-
-\section{Work Contributions}
-
-Everyone: Report writing, Project planning \newline
-Isabel: \newline
-Dhajanae:  \newline
-Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
-Ritoban: \newline
-
-\section{Github Repository}
-
-The Github repository used in this project can be accessed at \url{https://github.com/igomez39/BIOS625}.
-
-\section{References}
 
 
 
