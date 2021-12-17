@@ -9,9 +9,9 @@ output:
     pandoc_args: ["--natbib"]
 ---
 
-\section{Github Repository}
-
-The Github repository used in this project can be accessed at \url{https://github.com/igomez39/BIOS625}.
+\begin{center}
+GITHUB: \url{https://github.com/igomez39/BIOS625}.
+\end{center}
 
 \section{Work Contributions}
 
@@ -29,7 +29,9 @@ The data for this analysis come from the Early Childhood Longitudinal Study (ECL
 
 \section{Descriptive Plots}
 
-We first made descriptive plots to visualize the demographics of the study sample and basic trends in the data. The figures below show frequencies by different categories of interest. Most students in the cohort attended a public school, and both the teachers and parents in this sample tended to be highly educated. However, there was still enough diversity in these variables to study the differences across groups. The cohort included a well-balanced mix of students from urban, suburban, and rural areas, which is a strength of the study design. 
+We first made descriptive plots to visualize the demographics of the study sample and basic trends in the data. Most students in the cohort attended a public school, and both the teachers and parents in this sample tended to be highly educated. However, there was still enough diversity in these variables to study the differences across groups. The cohort included a well-balanced mix of students from urban, suburban, and rural areas, which is a strength of the study design. 
+
+Based on plots of the average math scores over time, we observed little difference in math scores across public and private schools. The math scores also appeared to be very similar regardless of teacher education level. However, we did observe that students with highly-educated parents had the largest average math scores every year (see plots on the next page).  
 
 ```{r, echo=FALSE,warning=F,message=F}
 setwd("//Users//nicholashartman//Downloads//Education Data")
@@ -91,12 +93,91 @@ scale_fill_discrete(labels = c("City", "Suburb", "Town", "Rural")))
 grid.arrange(g1,g2,g3,g4)
 ```
 
+```{r,echo=FALSE,warning=FALSE,message=F,fig.height=4}
+
+#Read Data
+setwd("//Users//nicholashartman//Downloads//Education Data")
+edu_data=as.data.frame(fread("Data_Long_Format.csv"))
+
+#COLOR BLIND FRIENDLY PALETTE
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#000000", "#0072B2", "#D55E00", "#CC79A7")
+
+###PREPPING SCHOOL DATA
+edu_data <- edu_data %>% group_by(Teacher_Education) %>% mutate(avg_math = mean(Math_Score)) %>% filter(is.na(Teacher_Education)==FALSE, is.na(Math_Score) ==FALSE, Math_Score != -9, Teacher_Education != -9, Parent1_Education != -9, Parent2_Education != -9)
+
+#Grouping by school
+
+edu_data_school <- edu_data %>% filter(is.na(School_ID)==FALSE, is.na(Math_Score) ==FALSE, Pub_Pri != -1) %>%
+  group_by(School_ID)  %>% mutate(avg_math_school = mean(Math_Score))
+
+edu_data_school$pub_pri = as.factor(edu_data_school$Pub_Pri)
+levels(edu_data_school$pub_pri) <- c("Public","Private")
+
+test = data.frame(tchr_edu = unique(edu_data$Teacher_Education), avg_math = unique(edu_data$avg_math))
+
+edu_data_school$Teacher_Education = as.factor(edu_data_school$Teacher_Education)
+levels(edu_data_school$Teacher_Education) <- c("Bachelors Degree or Less", 
+                                        "Master's Degree", "Advanced Degree")
+
+#AVERAGE MATH SCHOOL BY YEAR 
+edu_data_school <- edu_data_school %>% group_by(Dates) %>% 
+  mutate(avg_math_yr = mean(Math_Score))
+
+#RECODING SCHOOL YEAR TO REPRESENT GRADE LEVEL
+edu_data_school$Dates = as.factor(edu_data_school$Dates)
+levels(edu_data_school$Dates) <- c("K","1","2","3","4","5")
+
+#AVERAGE MATH SCORE BY TEACHER EDUCUATION
+edu_data_school <- edu_data_school %>% group_by(Teacher_Education, Dates) %>% 
+  mutate(avg_math_yr_tchr = mean(Math_Score))
+
+edu_data_school$Parent1_Education = as.factor(edu_data_school$Parent1_Education)
+levels(edu_data_school$Parent1_Education) <- c("8th grade or less",
+                                               "9-12th grade", 
+                                               "HS Diploma/Equivalent",
+                                               "Vocational/Technical School", 
+                                               "Some College",
+                                               "Bachelors Degree", "Graduate/Professional School", "Masters", "PhD or Professional Degree")
+edu_data_school <- edu_data_school %>% group_by(Parent1_Education, Dates)%>%
+  mutate(avg_math_yr_parent = mean(Math_Score))
+
+
+#DIFFERENCE IN AVERAGE MATH SCHOOL
+edu_data_school <- edu_data_school %>%
+  group_by(Dates) %>%
+  mutate(diff_math_avg = avg_math_yr - lag(avg_math_yr, default = 0))
+
+g1=(ggplot(edu_data_school, aes(x = Dates, y = avg_math_yr)) +
+  geom_point() +
+  facet_wrap(as.factor(edu_data_school$pub_pri))+
+  labs(x = "Grade Level" , y = "Average Math Score") +
+  theme_classic())
+
+g2=(ggplot(edu_data_school, aes(x = Dates, y = avg_math_yr_tchr, col =Teacher_Education)) +
+  geom_point() +
+  labs(x = "Grade Level" , y = "Average Math Score",colour="Teacher Education") +
+  theme_classic())
+
+g3=(ggplot(edu_data_school, aes(x = Dates, y = avg_math_yr_parent, col = Parent1_Education)) +
+  geom_point() +
+  labs(x = "Grade Level" , y = "Average Math Score",colour="Parent Education") +
+  theme_classic() +
+  scale_colour_manual(values = cbp1))
+
+grid.arrange(g2,g3,nrow=2)
+```
+
+```{r,echo=FALSE,fig.height=2}
+g1
+```
+
 \section{Math Score Inequality}
 
-\noindent We studied the amount of inequality in math performance and how this changes over time within public and private elementary schools. To accomplish this, we used the Gini Index, which is a well-known measure of inequality and is commonly used to describe wealth inequality. The formula for the Gini Index is [@Inequality]:
+\noindent We studied the amount of inequality in math performance, and how this changes over time within public and private elementary schools. To accomplish this, we used the Gini Index, which is a well-known measure of inequality and is commonly used to describe wealth inequality. The formula for the Gini Index is [@Inequality]:
 
 $$\textrm{Gini}=\frac{\sum_{i=1}^n \sum_{j=1}^n |x_i-x_j|}{2n^2\bar{x}},$$
-\noindent where $x$ represents the math score. Higher Gini Index values correspond to more inequality in the math scores. For this analysis, we used a re-scaled version of the math scores since $x$ must be positive in the Gini Index formula. There are two main computational challenges that arise in Gini Index estimation [@Inequality]:
+\noindent where $x$ represents the math score. Higher Gini Index values correspond to greater inequality in the math scores. For this analysis, we used a re-scaled version of the math scores since $x$ must be positive in the Gini Index formula. There are two main computational challenges that arise in Gini Index estimation [@Inequality]:
 
 \begin{enumerate}
 \item Due to a lack of theoretical formulas for the Gini Index standard error, nonparametric bootstrapping is needed to estimate the uncertainty in the Gini Index. 
@@ -131,13 +212,15 @@ g
 To study the relationships between social factors and math performance over time, we used a Generalized Least Squares (GLS) approach. We chose to use GLS over mixed models because we are mainly interested in the marginal associations. No structure was assumed for the covariance matrix of scores over time because it resulted in a substantially better model fit (and AIC) compared to other covariance structures (such as AR1). We specified the marginal model as:
 
 \begin{align*}E[\textrm{Score}_{ij}]&=\beta_0+\beta_1\textrm{Time}_{ij}+\beta_2 I(\textrm{School}_i=\textrm{Private})+\beta_3 \textrm{Teacher\_Education}_i+\beta_4 \textrm{Parent\_Education}_i\\
- &+\beta_5 \textrm{Locale} + \beta_6 I(\textrm{School}_i=\textrm{Private}) \times \textrm{Time}_{ij}+\beta_7 \textrm{Teacher\_Education}_i \times \textrm{Time}_{ij} \\
- &+\beta_8 \textrm{Parent\_Education}_i \times \textrm{Time}_{ij}+\beta_9 \textrm{Locale}_i \times \textrm{Time}_{ij}.
+ &+\beta_5 I(\textrm{Locale}_i=\textrm{Rural})+\beta_6 I(\textrm{Locale}_i=\textrm{Town})+\beta_7 I(\textrm{Locale}_i=\textrm{Suburban}) \\
+ &+ \beta_8  I(\textrm{School}_i=\textrm{Private}) \times \textrm{Time}_{ij}+\beta_9 \textrm{Teacher\_Education}_i \times \textrm{Time}_{ij} \\
+ &+ \beta_{10} \textrm{Parent\_Education}_i \times \textrm{Time}_{ij} +\beta_{11} I(\textrm{Locale}_i=\textrm{Rural}) \times \textrm{Time}_{ij} \\
+ &+\beta_{12} I(\textrm{Locale}_i=\textrm{Town}) \times \textrm{Time}_{ij} + \beta_{13} I(\textrm{Locale}_i=\textrm{Suburban}) \times \textrm{Time}_{ij}.
  \end{align*}
 
-Given that a nontrivial amount of the data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
+Given that a nontrivial amount of data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.height=5, fig.width=10}
 #Run on local computer to make plot
 setwd("//Users//nicholashartman//Downloads")
 GLS=read.csv("GLS.csv")[,-1]
@@ -163,7 +246,7 @@ Based on the forest plot above, we see a strong positive time trend in the cohor
 
 \section{Discussion}
 
-The results of this analysis have important policy implications. For example, future work is needed to uncover why public schools have more inequality in math scores, and what interventions can be used to reduce these education gaps. In our longitudinal modeling, we observed that having a highly-educated parent is significantly associated with higher scores in kindergarten. Schools and policymakers may attempt to identify the specific factors that are driving this association and provide all students with the same resources. 
+The results of this analysis have important policy implications. For example, future work is needed to uncover why public schools have more inequality in math scores, and what interventions can be used to reduce these education gaps. In our longitudinal modeling, we observed that having a highly-educated parent is significantly associated with higher scores in kindergarten. Schools and policymakers may attempt to identify specific factors that are driving this association and provide all students with the same resources. 
 
 
 
