@@ -16,7 +16,7 @@ GITHUB: \url{https://github.com/igomez39/BIOS625}.
 \section{Work Contributions}
 
 Everyone: Report writing, Project planning \newline
-Isabel: \newline
+Isabel: ggplot visualizations\newline
 Dhajanae:  ggplot visuals \newline
 Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
 Ritoban: 
@@ -246,8 +246,10 @@ Based on the forest plot above, we see a strong positive time trend in the cohor
 
 \section{Discussion}
 
+
 The results of this analysis have important policy implications. For example, future work is needed to uncover why public schools have more inequality in math scores, and what interventions can be used to reduce these education gaps. In our longitudinal modeling, we observed that having a highly-educated parent is significantly associated with higher scores in kindergarten. Schools and policymakers may attempt to identify specific factors that are driving this association and provide all students with the same resources. 
 
+This analysis considered different social factors in the impact of average math score over time. The factors that appear to negatively impact average math score includes living in an urban setting and parents with a low educational level. Future studies may look into the interaction between parent-education level and socioeconomic status. As well as parent-educational level and location of living (urban vs rural). Many studies have shown a positive association between parent involvement and child's education, this may directly linked with the parent education level and the type of job the parent may work [@ParentInvolvement]. Finally, future studies may consider measuring student success in schools in forms beyond a math exam. This may include a holistic teacher and parent review on how their child is progressing in their education. 
 
 
 
