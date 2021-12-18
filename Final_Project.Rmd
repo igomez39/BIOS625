@@ -16,10 +16,11 @@ GITHUB: \url{https://github.com/igomez39/BIOS625}.
 \section{Work Contributions}
 
 Everyone: Report writing, Project planning \newline
-Isabel: ggplot visualizations\newline
+
+Isabel: ggplot visuals \newline
 Dhajanae:  ggplot visuals \newline
 Nicholas: Data long format code, Gini Index bootstrap analysis, Cluster computing for GLS model \newline
-Ritoban: 
+Ritoban: Multiple Imputation of the Data, Longitudinal Data Analysis
 
 \section{Introduction}
 
@@ -209,7 +210,7 @@ g
 
 \section{Longitudinal Models}
 
-To study the relationships between social factors and math performance over time, we used a Generalized Least Squares (GLS) approach. We chose to use GLS over mixed models because we are mainly interested in the marginal associations. No structure was assumed for the covariance matrix of scores over time because it resulted in a substantially better model fit (and AIC) compared to other covariance structures (such as AR1). We specified the marginal model as:
+To study the relationships between social factors and math performance over time, we used a Generalized Least Squares (GLS) approach. We chose to use GLS over mixed models because we are mainly interested in the marginal associations. No structure was assumed for the covariance matrix of scores over time because it resulted in a substantially better model fit (and AIC) compared to other covariance structures (such as Exponential or Hybrid Structure). We specified the mean model as:
 
 \begin{align*}E[\textrm{Score}_{ij}]&=\beta_0+\beta_1\textrm{Time}_{ij}+\beta_2 I(\textrm{School}_i=\textrm{Private})+\beta_3 \textrm{Teacher\_Education}_i+\beta_4 \textrm{Parent\_Education}_i\\
  &+\beta_5 I(\textrm{Locale}_i=\textrm{Rural})+\beta_6 I(\textrm{Locale}_i=\textrm{Town})+\beta_7 I(\textrm{Locale}_i=\textrm{Suburban}) \\
@@ -218,7 +219,7 @@ To study the relationships between social factors and math performance over time
  &+\beta_{12} I(\textrm{Locale}_i=\textrm{Town}) \times \textrm{Time}_{ij} + \beta_{13} I(\textrm{Locale}_i=\textrm{Suburban}) \times \textrm{Time}_{ij}.
  \end{align*}
 
-Given that a nontrivial amount of data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from linear, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
+Given that a nontrivial amount of data was missing, we performed multiple imputation with chained equations using the mice package in R [@mi]. The data were imputed using the predictions from predictive mean matching, logistic, proportional odds, and multinomial models for continuous, binary, ordinal, and categorical data respectively. One hundred imputed datasets were created and the GLS model was fit to each one simultaneously using cluster computing. This reduced the computational time from approximately 8 hours to 5 minutes. The estimates were then combined according to Rubin's multiple imputation rules [@LR]. Any model that did not converge was discarded from the analysis. A forest plot of the point estimates and 95\% confidence intervals is shown:
 
 ```{r, echo=FALSE, fig.height=5, fig.width=10}
 #Run on local computer to make plot
