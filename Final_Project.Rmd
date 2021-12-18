@@ -35,13 +35,12 @@ We first made descriptive plots to visualize the demographics of the study sampl
 Based on plots of the average math scores over time, we observed little difference in math scores across public and private schools. The math scores also appeared to be very similar regardless of teacher education level. However, we did observe that students with highly-educated parents had the largest average math scores every year (see plots on the next page).  
 
 ```{r, echo=FALSE,warning=F,message=F}
-setwd("//Users//nicholashartman//Downloads//Education Data")
-
+#setwd("~/BIOS625")
 library(tidyverse)
 library(data.table)
 library(gridExtra)
 #Read Data
-dat=as.data.frame(fread("Imputed_Data.csv",sep=","))
+dat=as.data.frame(fread("data/Imputed_Data.csv",sep=","))
 #####Visuals######
 library(ggplot2)
 library(treemapify)
@@ -97,8 +96,7 @@ grid.arrange(g1,g2,g3,g4)
 ```{r,echo=FALSE,warning=FALSE,message=F,fig.height=4}
 
 #Read Data
-setwd("//Users//nicholashartman//Downloads//Education Data")
-edu_data=as.data.frame(fread("Data_Long_Format.csv"))
+edu_data=as.data.frame(fread("https://docs.google.com/spreadsheets/d/12FOGkjzC7klgUhqmb2PLZVINmsa12XkJvj6mVAuUA5M/edit?usp=sharing"))
 
 #COLOR BLIND FRIENDLY PALETTE
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -188,13 +186,11 @@ $$\textrm{Gini}=\frac{\sum_{i=1}^n \sum_{j=1}^n |x_i-x_j|}{2n^2\bar{x}},$$
 We addressed the challenges of (2) by using a vectorized implementation of the Gini Index from the reldist package in R [@reldist]. Then, to further speed up the resampling in (1), we used parallel computing. For each type of school (Public vs. Private) and for each timepoint, we resampled the corresponding data with replacement 10,000 times and computed the Gini Index on each of these bootstrap samples. A 95\% confidence interval for each point estimate was computed from the quantiles of the bootstrap distribution. The figure below shows the Gini Index estimates and bootstrap 95\% confidence intervals over time, stratified by school type:
 
 ```{r, echo=FALSE,fig.width=12}
-setwd("//Users//nicholashartman//Downloads//Education Data")
-
 #Read from cluster-generated files
-ests=as.matrix(read.csv("ests.csv")[,-1])
-boots=as.matrix(read.csv("boots.csv")[,-1])
-lower=as.matrix(read.csv("lower.csv")[,-1])
-upper=as.matrix(read.csv("upper.csv")[,-1])
+ests=as.matrix(read.csv("data/ests.csv")[,-1])
+boots=as.matrix(read.csv("data/boots.csv")[,-1])
+lower=as.matrix(read.csv("data/lower.csv")[,-1])
+upper=as.matrix(read.csv("data/upper.csv")[,-1])
 ggdata=data.frame(ests=c(ests[1,],ests[2,]),lower=c(lower[1,],lower[2,]),time=c(1:6,1:6),
                   upper=c(upper[1,],upper[2,]),school=c(rep("Public",6),rep("Private",6)))
 g=ggplot(ggdata,aes(x=time,y=ests,group=school,color=school))+geom_line()+geom_point()
@@ -223,9 +219,8 @@ Given that a nontrivial amount of data was missing, we performed multiple imputa
 
 ```{r, echo=FALSE, fig.height=5, fig.width=10}
 #Run on local computer to make plot
-setwd("//Users//nicholashartman//Downloads")
-GLS=read.csv("GLS.csv")[,-1]
-GLS_SE=read.csv("GLS_SE.csv")[,-1]
+GLS=read.csv("data/GLS.csv")[,-1]
+GLS_SE=read.csv("data/GLS_SE.csv")[,-1]
 low=GLS-1.96*GLS_SE
 up=GLS+1.96*GLS_SE
 label=c("Intercept","Teacher Education","Time","Parent Education","Suburb","Town","Rural",
